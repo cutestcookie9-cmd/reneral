@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { auth, database } from '../lib/firebase';
+import { database } from '../lib/firebase';
 import { ref, push, onValue, set } from 'firebase/database';
 import { Send, Smile, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
@@ -7,9 +7,10 @@ import { format } from 'date-fns';
 interface ChatAreaProps {
   channel: any;
   server: any;
+  currentUser: any;
 }
 
-export default function ChatArea({ channel, server }: ChatAreaProps) {
+export default function ChatArea({ channel, server, currentUser }: ChatAreaProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -43,7 +44,7 @@ export default function ChatArea({ channel, server }: ChatAreaProps) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !auth.currentUser || !channel?.id || !server?.id) return;
+    if (!newMessage.trim() || !currentUser || !channel?.id || !server?.id) return;
 
     try {
       const messagesRef = ref(database, `servers/${server.id}/channels/${channel.id}/messages`);
@@ -51,9 +52,8 @@ export default function ChatArea({ channel, server }: ChatAreaProps) {
       
       await set(newMessageRef, {
         content: newMessage,
-        authorId: auth.currentUser.uid,
-        authorName: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Anonymous',
-        authorAvatar: auth.currentUser.photoURL,
+        authorId: currentUser.id,
+        authorName: currentUser.username,
         timestamp: Date.now()
       });
 

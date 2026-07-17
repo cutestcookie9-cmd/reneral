@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { auth } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
@@ -9,13 +7,18 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // Check for user session in localStorage
+    const storedUser = localStorage.getItem('reneral_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('reneral_user');
+    setUser(null);
+  };
 
   if (loading) {
     return (
@@ -25,7 +28,7 @@ function App() {
     );
   }
 
-  return user ? <Dashboard /> : <Login />;
+  return user ? <Dashboard currentUser={user} onLogout={handleLogout} /> : <Login />;
 }
 
 export default App;

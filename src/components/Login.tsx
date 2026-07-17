@@ -1,35 +1,79 @@
 import { useState } from 'react';
-import { auth } from '../lib/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { Chrome, Mail } from 'lucide-react';
+import { firestore } from '../lib/firebase';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { User, Lock } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
+
     try {
+      const usersRef = collection(firestore, 'users');
+      
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // Check if username already exists
+        const q = query(usersRef, where('username', '==', username.toLowerCase()));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          setError('Username already taken');
+          setLoading(false);
+          return;
+        }
+
+        // Create new user
+        const newUserRef = await addDoc(usersRef, {
+          username: username.toLowerCase(),
+          password: password, // Note: In production, hash passwords!
+          createdAt: Date.now()
+        });
+
+        // Store user session
+        localStorage.setItem('reneral_user', JSON.stringify({
+          id: newUserRef.id,
+          username: username.toLowerCase()
+        }));
+
+        window.location.reload();
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Login
+        const q = query(usersRef, where('username', '==', username.toLowerCase()));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          setError('User not found');
+          setLoading(false);
+          return;
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        if (userData.password !== password) {
+          setError('Incorrect password');
+          setLoading(false);
+          return;
+        }
+
+        // Store user session
+        localStorage.setItem('reneral_user', JSON.stringify({
+          id: userDoc.id,
+          username: userData.username
+        }));
+
+        window.location.reload();
       }
     } catch (err: any) {
       setError(err.message);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setError('');
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (err: any) {
-      setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -50,66 +94,56 @@ export default function Login() {
             </div>
           )}
 
-          <button
-            onClick={handleGoogleAuth}
-            className="w-full flex items-center justify-center gap-3 bg-secondary hover:bg-secondary/80 text-foreground py-3 px-4 rounded-md transition-colors"
-          >
-            <Chrome className="w-5 h-5" />
-            Continue with Google
-          </button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-card text-muted-foreground">or</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleEmailAuth} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email
+              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
+                Username
               </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-                placeholder="you@example.com"
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  placeholder="your_username"
+                />
+              </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-md transition-colors flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Mail className="w-5 h-5" />
-              {isSignUp ? 'Sign Up' : 'Sign In'}
+              {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
             </button>
           </form>
 
           <div className="text-center text-sm">
             <button
+              type="button"
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-primary hover:underline"
             >

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth, firestore } from '../lib/firebase';
-import { signOut } from 'firebase/auth';
+import { firestore } from '../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { LogOut, Plus, Settings } from 'lucide-react';
 import ServerList from './ServerList';
@@ -9,18 +8,23 @@ import ChatArea from './ChatArea';
 import MemberList from './MemberList';
 import CreateServerModal from './CreateServerModal';
 
-export default function Dashboard() {
+interface DashboardProps {
+  currentUser: any;
+  onLogout: () => void;
+}
+
+export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
   const [servers, setServers] = useState<any[]>([]);
   const [selectedServer, setSelectedServer] = useState<any>(null);
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [showCreateServer, setShowCreateServer] = useState(false);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    if (!currentUser) return;
 
     const q = query(
       collection(firestore, 'servers'),
-      where('members', 'array-contains', auth.currentUser.uid)
+      where('members', 'array-contains', currentUser.id)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -35,20 +39,16 @@ export default function Dashboard() {
     });
 
     return () => unsubscribe();
-  }, [selectedServer]);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
+  }, [selectedServer, currentUser]);
 
   const handleCreateServer = async (name: string) => {
-    if (!auth.currentUser) return;
+    if (!currentUser) return;
 
     try {
       await addDoc(collection(firestore, 'servers'), {
         name,
-        ownerId: auth.currentUser.uid,
-        members: [auth.currentUser.uid],
+        ownerId: currentUser.id,
+        members: [currentUser.id],
         channels: [
           {
             id: 'general',
@@ -90,7 +90,7 @@ export default function Dashboard() {
 
         <div className="mt-auto">
           <button
-            onClick={handleLogout}
+            onClick={onLogout}
             className="w-12 h-12 bg-secondary hover:bg-destructive text-destructive hover:text-destructive-foreground rounded-full flex items-center justify-center transition-colors"
           >
             <LogOut className="w-5 h-5" />
@@ -122,6 +122,7 @@ export default function Dashboard() {
           <ChatArea
             channel={selectedChannel}
             server={selectedServer}
+            currentUser={currentUser}
           />
         </div>
       )}
