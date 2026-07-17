@@ -28,3 +28,4 @@ dist-ssr
 .env.local
 .env.production
 nexus-inventions-firebase-adminsdk-fbsvc-9b77aa5931.json
+node_modules
