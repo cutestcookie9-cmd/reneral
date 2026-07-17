@@ -14,6 +14,7 @@ export interface Server {
   ownerId: string;
   members: string[];
   channels: Channel[];
+  inviteCode?: string;
   createdAt: number;
 }
 
@@ -51,4 +52,20 @@ export interface DirectMessage {
   authorAvatar?: string;
   recipientId: string;
   timestamp: number;
+}
+
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  fromUsername: string;
+  toUserId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: number;
+}
+
+export interface Friendship {
+  id: string;
+  userId1: string;
+  userId2: string;
+  createdAt: number;
 }
