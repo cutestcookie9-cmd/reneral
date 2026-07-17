@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { firestore } from '../lib/firebase';
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface MemberListProps {
   server: any;

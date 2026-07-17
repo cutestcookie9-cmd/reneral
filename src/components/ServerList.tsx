@@ -1,4 +1,3 @@
-import { Hash } from 'lucide-react';
 
 interface ServerListProps {
   servers: any[];

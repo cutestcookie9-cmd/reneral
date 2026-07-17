@@ -3,14 +3,28 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getDatabase, Database } from 'firebase/database';
 
+interface ImportMetaEnv {
+  VITE_FIREBASE_API_KEY: string;
+  VITE_FIREBASE_AUTH_DOMAIN: string;
+  VITE_FIREBASE_PROJECT_ID: string;
+  VITE_FIREBASE_STORAGE_BUCKET: string;
+  VITE_FIREBASE_MESSAGING_SENDER_ID: string;
+  VITE_FIREBASE_APP_ID: string;
+  VITE_FIREBASE_DATABASE_URL: string;
+}
+
+interface ImportMeta {
+  env: ImportMetaEnv;
+}
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  apiKey: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_API_KEY,
+  authDomain: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_APP_ID,
+  databaseURL: (import.meta as unknown as ImportMeta).env.VITE_FIREBASE_DATABASE_URL,
 };
 
 let app: FirebaseApp;

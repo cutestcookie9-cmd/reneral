@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { auth, firestore, database } from '../lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { auth, database } from '../lib/firebase';
 import { ref, push, onValue, set } from 'firebase/database';
 import { Send, Smile, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
@@ -20,9 +19,8 @@ export default function ChatArea({ channel, server }: ChatAreaProps) {
 
     // Use Real-time Database for real-time messaging
     const messagesRef = ref(database, `servers/${server.id}/channels/${channel.id}/messages`);
-    const messagesQuery = query(messagesRef);
 
-    const unsubscribe = onValue(messagesQuery, (snapshot) => {
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const messagesArray = Object.entries(data).map(([key, value]: [string, any]) => ({

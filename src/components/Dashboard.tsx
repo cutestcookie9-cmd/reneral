@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { auth, firestore } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { LogOut, Plus, Settings, Hash, Users } from 'lucide-react';
+import { LogOut, Plus, Settings } from 'lucide-react';
 import ServerList from './ServerList';
 import ChannelList from './ChannelList';
 import ChatArea from './ChatArea';
@@ -45,7 +45,7 @@ export default function Dashboard() {
     if (!auth.currentUser) return;
 
     try {
-      const serverRef = await addDoc(collection(firestore, 'servers'), {
+      await addDoc(collection(firestore, 'servers'), {
         name,
         ownerId: auth.currentUser.uid,
         members: [auth.currentUser.uid],
