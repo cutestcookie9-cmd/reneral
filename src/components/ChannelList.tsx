@@ -4,9 +4,10 @@ interface ChannelListProps {
   server: any;
   selectedChannel: any;
   onSelectChannel: (channel: any) => void;
+  onCreateChannel: () => void;
 }
 
-export default function ChannelList({ server, selectedChannel, onSelectChannel }: ChannelListProps) {
+export default function ChannelList({ server, selectedChannel, onSelectChannel, onCreateChannel }: ChannelListProps) {
   const channels = server.channels || [];
 
   return (
@@ -17,7 +18,7 @@ export default function ChannelList({ server, selectedChannel, onSelectChannel }
             <Hash className="w-4 h-4" />
             Text Channels
           </div>
-          <button className="text-muted-foreground hover:text-foreground">
+          <button onClick={onCreateChannel} className="text-muted-foreground hover:text-foreground">
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -46,7 +47,7 @@ export default function ChannelList({ server, selectedChannel, onSelectChannel }
             <Settings className="w-4 h-4" />
             Voice Channels
           </div>
-          <button className="text-muted-foreground hover:text-foreground">
+          <button onClick={onCreateChannel} className="text-muted-foreground hover:text-foreground">
             <Plus className="w-4 h-4" />
           </button>
         </div>

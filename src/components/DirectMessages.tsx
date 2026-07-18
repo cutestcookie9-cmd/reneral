@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { database } from '../lib/firebase';
 import { ref, push, onValue, set } from 'firebase/database';
-import { Send, Smile, MoreVertical } from 'lucide-react';
+import { Send, Smile, MoreVertical, Image } from 'lucide-react';
 import { format } from 'date-fns';
+import EmojiPicker from './EmojiPicker';
 
 interface DirectMessagesProps {
   currentUser: any;
@@ -12,6 +13,8 @@ interface DirectMessagesProps {
 export default function DirectMessages({ currentUser, selectedUser }: DirectMessagesProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversationId = [currentUser.id, selectedUser.id].sort().join('_');
@@ -32,7 +35,7 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
       } else {
         setMessages([]);
       }
-      scrollToBottom();
+      setTimeout(scrollToBottom, 100);
     });
 
     return () => unsubscribe();
@@ -50,6 +53,14 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
       const messagesRef = ref(database, `directMessages/${conversationId}/messages`);
       const newMessageRef = push(messagesRef);
       
+      console.log('Sending DM to:', `directMessages/${conversationId}/messages`);
+      console.log('DM data:', {
+        content: newMessage,
+        authorId: currentUser.id,
+        authorName: currentUser.username,
+        timestamp: Date.now()
+      });
+      
       await set(newMessageRef, {
         content: newMessage,
         authorId: currentUser.id,
@@ -58,8 +69,48 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
       });
 
       setNewMessage('');
+      console.log('DM sent successfully');
     } catch (error) {
       console.error('Error sending DM:', error);
+      alert('Failed to send DM. Check console for details.');
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('https://api.imgbb.com/1/upload?key=756edd853b4d23cee872be8b2d41ac77', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const imageUrl = data.data.url;
+        
+        const messagesRef = ref(database, `directMessages/${conversationId}/messages`);
+        const newMessageRef = push(messagesRef);
+        
+        await set(newMessageRef, {
+          content: imageUrl,
+          authorId: currentUser.id,
+          authorName: currentUser.username,
+          timestamp: Date.now(),
+          isImage: true
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -112,7 +163,11 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
                     ? 'bg-primary text-primary-foreground' 
                     : 'bg-secondary text-foreground'
                 }`}>
-                  <p className="break-words">{message.content}</p>
+                  {message.isImage ? (
+                    <img src={message.content} alt="Uploaded image" className="max-w-full rounded-lg" />
+                  ) : (
+                    <p className="break-words">{message.content}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -123,13 +178,38 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
 
       {/* Input */}
       <div className="p-4 bg-card border-t border-border">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
-          <button
-            type="button"
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Smile className="w-6 h-6" />
-          </button>
+        <form onSubmit={handleSendMessage} className="flex gap-2 relative">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Smile className="w-6 h-6" />
+            </button>
+            {showEmojiPicker && (
+              <EmojiPicker
+                onSelect={(emoji) => setNewMessage(prev => prev + emoji)}
+                onClose={() => setShowEmojiPicker(false)}
+              />
+            )}
+          </div>
+          
+          <label className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={uploadingImage}
+            />
+            {uploadingImage ? (
+              <div className="w-6 h-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : (
+              <Image className="w-6 h-6" />
+            )}
+          </label>
+          
           <input
             type="text"
             value={newMessage}

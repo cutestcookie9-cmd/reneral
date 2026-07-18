@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { firestore } from '../lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, deleteDoc } from 'firebase/firestore';
 import { LogOut, Plus, Settings, Users, MessageSquare, Copy, Check } from 'lucide-react';
 import ServerList from './ServerList';
 import ChannelList from './ChannelList';
 import ChatArea from './ChatArea';
 import MemberList from './MemberList';
 import CreateServerModal from './CreateServerModal';
+import CreateChannelModal from './CreateChannelModal';
+import ServerSettingsModal from './ServerSettingsModal';
 import FriendsList from './FriendsList';
 import DirectMessages from './DirectMessages';
 
@@ -20,6 +22,8 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
   const [selectedServer, setSelectedServer] = useState<any>(null);
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [showCreateServer, setShowCreateServer] = useState(false);
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
   const [view, setView] = useState<'servers' | 'friends' | 'dm'>('servers');
   const [selectedDMUser, setSelectedDMUser] = useState<any>(null);
   const [copiedInviteCode, setCopiedInviteCode] = useState<string | null>(null);
@@ -110,6 +114,54 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
     setView('dm');
   };
 
+  const handleCreateChannel = async (name: string, type: 'text' | 'voice') => {
+    if (!selectedServer) return;
+
+    try {
+      const serverRef = doc(firestore, 'servers', selectedServer.id);
+      const serverData = selectedServer;
+      
+      await updateDoc(serverRef, {
+        channels: [
+          ...serverData.channels,
+          {
+            id: name,
+            name,
+            type,
+            createdAt: Date.now()
+          }
+        ]
+      });
+
+      setShowCreateChannel(false);
+    } catch (error) {
+      console.error('Error creating channel:', error);
+    }
+  };
+
+  const handleUpdateServer = async (updates: any) => {
+    if (!selectedServer) return;
+
+    try {
+      await updateDoc(doc(firestore, 'servers', selectedServer.id), updates);
+    } catch (error) {
+      console.error('Error updating server:', error);
+    }
+  };
+
+  const handleDeleteServer = async () => {
+    if (!selectedServer || selectedServer.ownerId !== currentUser.id) return;
+
+    try {
+      await deleteDoc(doc(firestore, 'servers', selectedServer.id));
+      setSelectedServer(null);
+      setSelectedChannel(null);
+      setShowServerSettings(false);
+    } catch (error) {
+      console.error('Error deleting server:', error);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-background">
       {/* Server Sidebar */}
@@ -179,7 +231,11 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
               >
                 {copiedInviteCode === selectedServer.id ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               </button>
-              <button className="text-muted-foreground hover:text-foreground">
+              <button 
+                onClick={() => setShowServerSettings(true)}
+                className="text-muted-foreground hover:text-foreground"
+                title="Server Settings"
+              >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
@@ -205,6 +261,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
             server={selectedServer}
             selectedChannel={selectedChannel}
             onSelectChannel={setSelectedChannel}
+            onCreateChannel={() => setShowCreateChannel(true)}
           />
         </div>
       )}
@@ -243,6 +300,23 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
         <CreateServerModal
           onClose={() => setShowCreateServer(false)}
           onCreateServer={handleCreateServer}
+        />
+      )}
+
+      {showCreateChannel && (
+        <CreateChannelModal
+          onClose={() => setShowCreateChannel(false)}
+          onCreateChannel={handleCreateChannel}
+        />
+      )}
+
+      {showServerSettings && selectedServer && (
+        <ServerSettingsModal
+          server={selectedServer}
+          currentUser={currentUser}
+          onClose={() => setShowServerSettings(false)}
+          onUpdateServer={handleUpdateServer}
+          onDeleteServer={handleDeleteServer}
         />
       )}
     </div>
