@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { database } from '../lib/firebase';
 import { ref, push, onValue, set } from 'firebase/database';
-import { Send, Smile, MoreVertical, Image } from 'lucide-react';
+import { Send, Smile, MoreVertical, Image, Gift } from 'lucide-react';
 import { format } from 'date-fns';
 import EmojiPicker from './EmojiPicker';
+import GifPicker from './GifPicker';
 
 interface DirectMessagesProps {
   currentUser: any;
@@ -14,6 +15,7 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -114,18 +116,36 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
     }
   };
 
+  const handleGifSelect = async (gifUrl: string) => {
+    try {
+      const messagesRef = ref(database, `directMessages/${conversationId}/messages`);
+      const newMessageRef = push(messagesRef);
+      
+      await set(newMessageRef, {
+        content: gifUrl,
+        authorId: currentUser.id,
+        authorName: currentUser.username,
+        timestamp: Date.now(),
+        isGif: true
+      });
+    } catch (error) {
+      console.error('Error sending GIF:', error);
+      alert('Failed to send GIF');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="h-12 px-4 flex items-center border-b border-border bg-card">
+      <div className="h-12 px-4 flex items-center border-b border-[#1e1f22] bg-[#313338] shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
+          <div className="w-8 h-8 bg-[#5865f2] rounded-full flex items-center justify-center text-white font-semibold text-sm">
             {selectedUser?.username?.charAt(0).toUpperCase() || '?'}
           </div>
-          <h3 className="font-semibold text-foreground">{selectedUser?.username}</h3>
+          <h3 className="font-semibold text-white">{selectedUser?.username}</h3>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <button className="text-muted-foreground hover:text-foreground">
+          <button className="text-[#b5bac1] hover:text-white transition-colors">
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
@@ -134,7 +154,7 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-[#949ba4]">
             <div className="text-center">
               <div className="text-4xl mb-2">@</div>
               <p>Start your conversation with {selectedUser?.username}</p>
@@ -146,25 +166,27 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
               key={message.id} 
               className={`flex gap-4 group ${message.authorId === currentUser.id ? 'flex-row-reverse' : ''}`}
             >
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white font-semibold flex-shrink-0">
                 {message.authorName?.charAt(0).toUpperCase() || '?'}
               </div>
               <div className="flex-1 min-w-0">
                 <div className={`flex items-baseline gap-2 ${message.authorId === currentUser.id ? 'flex-row-reverse' : ''}`}>
-                  <span className="font-semibold text-foreground hover:underline cursor-pointer">
+                  <span className="font-semibold text-white hover:underline cursor-pointer">
                     {message.authorName}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-[#949ba4]">
                     {format(new Date(message.timestamp), 'MMM d, yyyy h:mm a')}
                   </span>
                 </div>
                 <div className={`inline-block max-w-md p-3 rounded-lg ${
                   message.authorId === currentUser.id 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-secondary text-foreground'
+                    ? 'bg-[#5865f2] text-white' 
+                    : 'bg-[#313338] text-[#dbdee1]'
                 }`}>
                   {message.isImage ? (
                     <img src={message.content} alt="Uploaded image" className="max-w-full rounded-lg" />
+                  ) : message.isGif ? (
+                    <img src={message.content} alt="GIF" className="max-w-full rounded-lg" />
                   ) : (
                     <p className="break-words">{message.content}</p>
                   )}
@@ -177,13 +199,13 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-card border-t border-border">
+      <div className="p-4 bg-[#313338] border-t border-[#1e1f22]">
         <form onSubmit={handleSendMessage} className="flex gap-2 relative">
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 text-[#b5bac1] hover:text-white transition-colors"
             >
               <Smile className="w-6 h-6" />
             </button>
@@ -195,7 +217,23 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
             )}
           </div>
           
-          <label className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowGifPicker(!showGifPicker)}
+              className="p-2 text-[#b5bac1] hover:text-white transition-colors"
+            >
+              <Gift className="w-6 h-6" />
+            </button>
+            {showGifPicker && (
+              <GifPicker
+                onSelect={handleGifSelect}
+                onClose={() => setShowGifPicker(false)}
+              />
+            )}
+          </div>
+          
+          <label className="p-2 text-[#b5bac1] hover:text-white transition-colors cursor-pointer">
             <input
               type="file"
               accept="image/*"
@@ -204,7 +242,7 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
               disabled={uploadingImage}
             />
             {uploadingImage ? (
-              <div className="w-6 h-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <div className="w-6 h-6 animate-spin rounded-full border-2 border-[#5865f2] border-t-transparent" />
             ) : (
               <Image className="w-6 h-6" />
             )}
@@ -215,12 +253,12 @@ export default function DirectMessages({ currentUser, selectedUser }: DirectMess
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message @${selectedUser?.username}`}
-            className="flex-1 px-4 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+            className="flex-1 px-4 py-2 bg-[#383a40] border border-[#383a40] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865f2] text-white placeholder-[#949ba4]"
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="p-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-[#5865f2] hover:bg-[#4752c4] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-6 h-6" />
           </button>

@@ -42,13 +42,22 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
         ...doc.data()
       }));
       setServers(serversData);
-      if (serversData.length > 0 && !selectedServer) {
-        setSelectedServer(serversData[0]);
+      
+      if (serversData.length > 0) {
+        if (!selectedServer) {
+          setSelectedServer(serversData[0]);
+        } else {
+          // Update selectedServer if it exists in the new data
+          const updatedSelectedServer = serversData.find(s => s.id === selectedServer.id);
+          if (updatedSelectedServer) {
+            setSelectedServer(updatedSelectedServer);
+          }
+        }
       }
     });
 
     return () => unsubscribe();
-  }, [selectedServer, currentUser]);
+  }, [currentUser]);
 
   const handleCreateServer = async (name: string) => {
     if (!currentUser) return;
@@ -120,22 +129,27 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
     try {
       const serverRef = doc(firestore, 'servers', selectedServer.id);
       const serverData = selectedServer;
+      const currentChannels = serverData.channels || [];
+      
+      console.log('Creating channel:', name, type);
+      console.log('Current channels:', currentChannels);
+      
+      const newChannel = {
+        id: name,
+        name,
+        type,
+        createdAt: Date.now()
+      };
       
       await updateDoc(serverRef, {
-        channels: [
-          ...serverData.channels,
-          {
-            id: name,
-            name,
-            type,
-            createdAt: Date.now()
-          }
-        ]
+        channels: [...currentChannels, newChannel]
       });
 
+      console.log('Channel created successfully');
       setShowCreateChannel(false);
     } catch (error) {
       console.error('Error creating channel:', error);
+      alert('Failed to create channel. Check console for details.');
     }
   };
 
@@ -163,29 +177,29 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-[#313338]">
       {/* Server Sidebar */}
-      <div className="w-18 bg-secondary flex flex-col items-center py-3 gap-2">
-        <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground font-bold mb-2">
+      <div className="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 gap-2 overflow-y-auto">
+        <div className="w-12 h-12 bg-[#5865f2] rounded-2xl flex items-center justify-center text-white font-bold mb-2 hover:rounded-xl transition-all cursor-pointer">
           R
         </div>
-        <div className="w-8 h-0.5 bg-border mb-2"></div>
+        <div className="w-8 h-0.5 bg-[#35363c] mb-2"></div>
         
         <button
           onClick={() => setView('servers')}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${view === 'servers' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl hover:bg-[#5865f2] hover:text-white ${view === 'servers' ? 'bg-[#5865f2] text-white rounded-xl' : 'bg-[#313338] text-[#b5bac1]'}`}
         >
           <MessageSquare className="w-6 h-6" />
         </button>
 
         <button
           onClick={() => setView('friends')}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${view === 'friends' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl hover:bg-[#5865f2] hover:text-white ${view === 'friends' ? 'bg-[#5865f2] text-white rounded-xl' : 'bg-[#313338] text-[#b5bac1]'}`}
         >
           <Users className="w-6 h-6" />
         </button>
 
-        <div className="w-8 h-0.5 bg-border mb-2"></div>
+        <div className="w-8 h-0.5 bg-[#35363c] mb-2"></div>
         
         {view === 'servers' && (
           <>
@@ -220,20 +234,20 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
 
       {/* Channel Sidebar / Friends Sidebar */}
       {view === 'servers' && selectedServer && (
-        <div className="w-60 bg-card flex flex-col border-r border-border">
-          <div className="h-12 px-4 flex items-center justify-between border-b border-border">
-            <h2 className="font-semibold text-foreground truncate">{selectedServer.name}</h2>
+        <div className="w-60 bg-[#2b2d31] flex flex-col">
+          <div className="h-12 px-4 flex items-center justify-between border-b border-[#1e1f22] shadow-sm">
+            <h2 className="font-semibold text-white truncate">{selectedServer.name}</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => handleCopyInviteCode(selectedServer)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-[#b5bac1] hover:text-white transition-colors"
                 title="Copy invite code"
               >
                 {copiedInviteCode === selectedServer.id ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               </button>
               <button 
                 onClick={() => setShowServerSettings(true)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-[#b5bac1] hover:text-white transition-colors"
                 title="Server Settings"
               >
                 <Settings className="w-5 h-5" />
@@ -241,7 +255,7 @@ export default function Dashboard({ currentUser, onLogout }: DashboardProps) {
             </div>
           </div>
 
-          <div className="p-3 border-b border-border">
+          <div className="p-3 border-b border-[#1e1f22]">
             <div className="flex gap-2">
               <input
                 type="text"

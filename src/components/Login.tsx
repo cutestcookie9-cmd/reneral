@@ -78,47 +78,47 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <div className="flex items-center justify-center min-h-screen bg-[#313338] p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary mb-2">Reneral</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold text-[#5865f2] mb-2">Reneral</h1>
+          <p className="text-[#949ba4]">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
         </div>
 
-        <div className="bg-card p-8 rounded-lg border border-border space-y-6">
+        <div className="bg-[#2b2d31] p-8 rounded-lg border border-[#1e1f22] space-y-6">
           {error && (
-            <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+            <div className="bg-[#ed4245]/10 text-[#ed4245] p-3 rounded-md text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-white mb-2">
                 Username
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#949ba4] w-5 h-5" />
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  className="w-full pl-10 pr-3 py-2 bg-[#1e1f22] border border-[#1e1f22] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865f2] text-white placeholder-[#949ba4]"
                   placeholder="your_username"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#949ba4] w-5 h-5" />
                 <input
                   id="password"
                   type="password"
@@ -126,7 +126,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  className="w-full pl-10 pr-3 py-2 bg-[#1e1f22] border border-[#1e1f22] rounded-md focus:outline-none focus:ring-2 focus:ring-[#5865f2] text-white placeholder-[#949ba4]"
                   placeholder="••••••••"
                 />
               </div>
@@ -135,7 +135,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white py-3 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
             </button>
@@ -145,7 +145,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-primary hover:underline"
+              className="text-[#5865f2] hover:underline"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>

@@ -12,10 +12,10 @@ export default function ServerList({ servers, selectedServer, onSelectServer }: 
         <button
           key={server.id}
           onClick={() => onSelectServer(server)}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-semibold transition-all hover:rounded-xl ${
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-semibold transition-all hover:rounded-xl hover:bg-[#5865f2] ${
             selectedServer?.id === server.id
-              ? 'bg-primary rounded-xl'
-              : 'bg-secondary hover:bg-primary'
+              ? 'bg-[#5865f2] rounded-xl'
+              : 'bg-[#313338]'
           }`}
           title={server.name}
         >
